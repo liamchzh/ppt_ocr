@@ -6,6 +6,7 @@ import tkMessageBox as box
 import tkFileDialog
 import ImageFilter
 
+#载入图像
 def load_image(): 
     global im
     global name
@@ -20,6 +21,7 @@ def load_image():
     else:
         box.showerror("ERROR", "please choose a file")
     
+#判断是否为jpg or tiff格式
 def is_image(filename):
     im = Image.open(filename)
     if im.format == 'JPEG' or im.format == 'TIFF':
@@ -41,47 +43,65 @@ def auto_cut():
     nim = im.convert('L')
     show_image(nim)
     w,h = im.size
+    print w, h
     nim_pix = nim.load()
-    find(w, h, nim_pix)
-    #up, down, left, right = find(w, h, nim_pix)
-    #box = (left, up, right, down)
-    #new_im = im.crop(box)
-    #show(new_im) 
+    process(w, h, nim_pix)
     
-def find(w, h, nim_pix):
-    up = 0
-    down = 0
-    left = 0
-    right = 0
+def process(w, h, nim_pix):
     row = []
     column = []
-    for i in range(w):
-        sum = 0
-        for j in range(h):
-            sum += nim_pix[i, j]
-        row.append(sum/w)
     for i in range(h):
         sum = 0
         for j in range(w):
             sum += nim_pix[j, i]
+        row.append(sum/w)
+    for i in range(w):
+        sum = 0
+        for j in range(h):
+            sum += nim_pix[i, j]
         column.append(sum/h)
-    print column
-    thres = 50
+    thres = 50 
     up, down = fun(thres, row)
-    left, right = fun(thres, column)
+    left, right =fun(thres, column)
     print up, down, left, right
+    cut(up, down, left, right)
 
 def fun(thres, list):
-    a = []
+    new_list = []
+    for item in list:
+        if item < thres:
+            new_list.append(-80)
+        else:
+            new_list.append(item)
+    print list
+    return find(new_list)
+
+def find(list):
+    sm = 0
+    mx = -99999999
+    cur = 0
+    begin = 0
+    end = len(list)-1
     for i in range(len(list)):
-        if list[i] > thres:
-            a.append(i)
-    print a
-    return min(a), max(a)
+        if list[i] > 0:
+            begin = i
+            break
+    while(cur < len(list)):
+        sm += list[cur]
+        if sm > mx:
+            mx = sm
+            end = cur
+        elif sm < 0:
+            sm = 0
+        cur += 1
+    return begin, end
+
 
 def cut(up, down, left, right):
-    pass
-
+    print left, up, right, down
+    box = (left, up, right, down)
+    cut_im = im.crop(box)
+    show_image(cut_im)
 
 
 def main():
@@ -109,12 +129,12 @@ def main():
     d = StringVar()
     #left = Entry(root, textvariable = l, width = 10)
     #left.grid(row = 1, column = 0)
-    up = Entry(root, textvariable = u, width = 10)
-    up.grid(row = 1, column = 1)
-    right = Entry(root, textvariable = r, width = 10)
-    right.grid(row = 1, column = 2)
-    down = Entry(root, textvariable = d, width = 10)
-    down.grid(row = 1, column = 3)
+    #up = Entry(root, textvariable = u, width = 10)
+    #up.grid(row = 1, column = 1)
+    #right = Entry(root, textvariable = r, width = 10)
+    #right.grid(row = 1, column = 2)
+    #down = Entry(root, textvariable = d, width = 10)
+    #down.grid(row = 1, column = 3)
 
     btn1 = Button(text=u'自动裁剪', command = auto_cut)
     btn1.grid(row = 1, column = 0)
