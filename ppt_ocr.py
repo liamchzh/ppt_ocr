@@ -5,6 +5,7 @@ from PIL import ImageTk, Image
 import tkMessageBox as box
 import tkFileDialog
 import ImageFilter
+from pytesser import *
 
 #载入图像
 def load_image(): 
@@ -43,10 +44,13 @@ def auto_cut():
     nim = im.convert('L')
     show_image(nim)
     w,h = im.size
-    print w, h
     nim_pix = nim.load()
-    process(w, h, nim_pix)
-    
+    up, down, left, right = process(w, h, nim_pix)
+    cuted_im = cut(up, down, left, right)
+    cuted_im = zengqiang(cuted_im)
+    show_image(cuted_im)
+    print image_to_string(cuted_im)
+
 def process(w, h, nim_pix):
     row = []
     column = []
@@ -63,8 +67,7 @@ def process(w, h, nim_pix):
     thres = 50 
     up, down = fun(thres, row)
     left, right =fun(thres, column)
-    print up, down, left, right
-    cut(up, down, left, right)
+    return up, down, left, right
 
 def fun(thres, list):
     new_list = []
@@ -73,7 +76,6 @@ def fun(thres, list):
             new_list.append(-80)
         else:
             new_list.append(item)
-    print list
     return find(new_list)
 
 def find(list):
@@ -98,11 +100,23 @@ def find(list):
 
 
 def cut(up, down, left, right):
-    print left, up, right, down
     box = (left, up, right, down)
-    cut_im = im.crop(box)
-    show_image(cut_im)
+    return im.crop(box)
 
+def zengqiang(im):
+    w,h = im.size
+    nim = Image.new('L',im.size)
+    lim = im.convert('L')
+    lpix = lim.load()
+    npix = nim.load()
+    for i in range(w):
+        for j in range(h):
+            if lpix[i, j] < 100:
+                npix[i, j] = lpix[i, j] * 0.7
+            else:
+                npix[i, j] = lpix[i, j] * 1.2
+    imgfilted = nim.filter(ImageFilter.SHARPEN);
+    return imgfilted
 
 def main():
     root = Tk()
