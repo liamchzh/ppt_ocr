@@ -16,7 +16,7 @@ def load_image():
         if is_image(name):
             im = Image.open(name)
             im = im.resize((600, 400))
-            show_pri_image(im)
+            show_image(im)
         else:
             box.showerror("ERROR", "please choose a image file")
     else:
@@ -30,15 +30,13 @@ def is_image(filename):
     else:
         return 0
 
-def show_pri_image(im):
-    img = ImageTk.PhotoImage(im)
-    im_label1.configure(image = img)
-    im_label1.image = img
+def yuantu():
+    show_image(im)
 
 def show_image(im):
     img = ImageTk.PhotoImage(im)
-    im_label2.configure(image = img)
-    im_label2.image = img
+    im_label1.configure(image = img)
+    im_label1.image = img
 
 def auto_cut():
     nim = im.convert('L')
@@ -49,8 +47,13 @@ def auto_cut():
     cuted_im = cut(up, down, left, right)
     cuted_im = zengqiang(cuted_im)
     show_image(cuted_im)
-    print image_to_string(cuted_im)
-
+    ocr(cuted_im)
+    
+def ocr(im):
+    content = image_to_string(im)
+    text_label.configure(text = content)
+    text_label.text = content
+    
 def process(w, h, nim_pix):
     row = []
     column = []
@@ -118,6 +121,19 @@ def zengqiang(im):
     imgfilted = nim.filter(ImageFilter.SHARPEN);
     return imgfilted
 
+def shoudong():
+    l = int(lv.get())
+    r = int(rv.get())
+    u = int(uv.get())
+    d = int(dv.get())
+    if l < r and u < d and r in range(401) and d in range(601):
+        cuted_im = cut(u, d, l, r)
+        cuted_im = zengqiang(cuted_im)
+        show_image(cuted_im)
+        ocr(cuted_im)
+    else:
+        print u'手动剪裁失败' 
+
 def main():
     root = Tk()
     root.title("PPT_Character Recognition")
@@ -131,28 +147,35 @@ def main():
     root.config(menu = menubar)
     
     global im_label1
-    global im_label2
+    global text_label
     emp_img = ImageTk.PhotoImage(Image.new('L',(1,1)))
     im_label1 = Label(root, image = emp_img, width = 600, height = 400, justify = 'left')
     im_label1.grid(row = 0, column = 0)
-    im_label2 = Label(root, image = emp_img, width = 600, height = 400, justify = 'right')
-    im_label2.grid(row = 0, column = 1)
-    l = StringVar()
-    u = StringVar()
-    r = StringVar()
-    d = StringVar()
-    #left = Entry(root, textvariable = l, width = 10)
-    #left.grid(row = 1, column = 0)
-    #up = Entry(root, textvariable = u, width = 10)
-    #up.grid(row = 1, column = 1)
-    #right = Entry(root, textvariable = r, width = 10)
-    #right.grid(row = 1, column = 2)
-    #down = Entry(root, textvariable = d, width = 10)
-    #down.grid(row = 1, column = 3)
+    text_label = Label(root, text = 'hi' )
+    text_label.grid(row = 0, column = 1)
+    global lv, uv, rv, dv
+    lv = StringVar()
+    uv = StringVar()
+    rv = StringVar()
+    dv = StringVar()
+    
+    left = Entry(root, textvariable = lv, text = 'left', width = 10)
+    left.grid(row = 3, column = 0)
+    up = Entry(root, textvariable = uv, width = 10)
+    up.grid(row = 4, column = 0)
+    right = Entry(root, textvariable = rv, width = 10)
+    right.grid(row = 5, column = 0)
+    down = Entry(root, textvariable = dv, width = 10)
+    down.grid(row = 6, column = 0)
+
+    btn0 = Button(text=u'显示原图', command = yuantu)
+    btn0.grid(row = 1, column = 0)
 
     btn1 = Button(text=u'自动裁剪', command = auto_cut)
-    btn1.grid(row = 1, column = 0)
-    root.mainloop()
+    btn1.grid(row = 2, column = 0)
 
+    btn2 = Button(text=u'手动裁剪', command = shoudong)
+    btn2.grid(row = 7, column = 0)
+    root.mainloop()
 if __name__ == '__main__':
     main()
