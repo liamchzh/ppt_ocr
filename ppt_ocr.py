@@ -18,9 +18,9 @@ def load_image():
             im = im.resize((600, 400))
             show_image(im)
         else:
-            box.showerror("ERROR", "please choose a image file")
+            box.showerror("ERROR", "请选择一个jpg或tiff文件")
     else:
-        box.showerror("ERROR", "please choose a file")
+        box.showerror("ERROR", u"请选择一个文件")
     
 #判断是否为jpg or tiff格式
 def is_image(filename):
@@ -30,14 +30,22 @@ def is_image(filename):
     else:
         return 0
 
+#显示原图
 def yuantu():
-    show_image(im)
+    try:
+        show_image(im)
+    except:
+        box.showerror("ERROR", u"原图显示失败")
 
 def show_image(im):
-    img = ImageTk.PhotoImage(im)
-    im_label1.configure(image = img)
-    im_label1.image = img
+    try:
+        img = ImageTk.PhotoImage(im)
+        im_label1.configure(image = img)
+        im_label1.image = img
+    except:
+        box.showerror("ERROR", u"图像显示失败")
 
+#自动处理
 def auto_cut():
     nim = im.convert('L')
     show_image(nim)
@@ -48,12 +56,27 @@ def auto_cut():
     cuted_im = zengqiang(cuted_im)
     show_image(cuted_im)
     ocr(cuted_im)
-    
+
+#识别图像
 def ocr(im):
+    global content  
     content = image_to_string(im)
     text_label.configure(text = content)
     text_label.text = content
-    
+
+#导出
+def export():
+    try:
+        global content
+        fo = open('export.txt','w')
+        content_gb2312 = content.encode('gb2312')
+        fo.write(content_gb2312)
+        fo.close()
+        box.showinfo(message=u'成功导出到export.txt')
+    except:
+        box.showerror("ERROR", u"导出失败")
+
+#找出图像边界
 def process(w, h, nim_pix):
     row = []
     column = []
@@ -106,6 +129,7 @@ def cut(up, down, left, right):
     box = (left, up, right, down)
     return im.crop(box)
 
+#图像增强
 def zengqiang(im):
     w,h = im.size
     nim = Image.new('L',im.size)
@@ -121,29 +145,32 @@ def zengqiang(im):
     imgfilted = nim.filter(ImageFilter.SHARPEN);
     return imgfilted
 
+#手动裁剪
 def shoudong():
-    l = int(lv.get())
-    r = int(rv.get())
-    u = int(uv.get())
-    d = int(dv.get())
-    if l < r and u < d and r in range(401) and d in range(601):
-        cuted_im = cut(u, d, l, r)
-        cuted_im = zengqiang(cuted_im)
-        show_image(cuted_im)
-        ocr(cuted_im)
-    else:
-        print u'手动剪裁失败' 
-
+    try:
+        l = int(lv.get())
+        r = int(rv.get())
+        u = int(uv.get())
+        d = int(dv.get())
+        if l < r and u < d and r in range(401) and d in range(601):
+            cuted_im = cut(u, d, l, r)
+            cuted_im = zengqiang(cuted_im)
+            show_image(cuted_im)
+            ocr(cuted_im)
+        else:
+            box.showerror("ERROR", u"裁剪图像失败\n请输入正确像素点")
+    except:
+        box.showerror("ERROR", u"手动识别失败")
 def main():
     root = Tk()
     root.title("PPT_Character Recognition")
-    root.geometry("1350x650+0+0")
+    root.geometry("900x600+150+50")
     
     menubar = Menu(root)
     filemenu = Menu(menubar, tearoff = 0)
-    filemenu.add_command(label = 'Open', command = lambda:load_image())
-##    filemenu.add_command(label = 'Save', command = lambda:save())
-    menubar.add_cascade(label= 'File', menu = filemenu)
+    filemenu.add_command(label = '打开', command = lambda:load_image())
+    filemenu.add_command(label = '导出', command = lambda:export())
+    menubar.add_cascade(label= '文件', menu = filemenu)
     root.config(menu = menubar)
     
     global im_label1
@@ -151,7 +178,7 @@ def main():
     emp_img = ImageTk.PhotoImage(Image.new('L',(1,1)))
     im_label1 = Label(root, image = emp_img, width = 600, height = 400, justify = 'left')
     im_label1.grid(row = 0, column = 0)
-    text_label = Label(root, text = 'hi' )
+    text_label = Label(root, text = u'欢迎使用' )
     text_label.grid(row = 0, column = 1)
     global lv, uv, rv, dv
     lv = StringVar()
@@ -159,23 +186,24 @@ def main():
     rv = StringVar()
     dv = StringVar()
     
-    left = Entry(root, textvariable = lv, text = 'left', width = 10)
-    left.grid(row = 3, column = 0)
+    left = Entry(root, textvariable = lv,  width = 10)
+    left.grid(row = 1, column = 1)
     up = Entry(root, textvariable = uv, width = 10)
-    up.grid(row = 4, column = 0)
+    up.grid(row = 2, column = 1)
     right = Entry(root, textvariable = rv, width = 10)
-    right.grid(row = 5, column = 0)
+    right.grid(row = 3, column = 1)
     down = Entry(root, textvariable = dv, width = 10)
-    down.grid(row = 6, column = 0)
+    down.grid(row = 4, column = 1)
 
     btn0 = Button(text=u'显示原图', command = yuantu)
     btn0.grid(row = 1, column = 0)
 
-    btn1 = Button(text=u'自动裁剪', command = auto_cut)
+    btn1 = Button(text=u'自动识别', command = auto_cut)
     btn1.grid(row = 2, column = 0)
 
-    btn2 = Button(text=u'手动裁剪', command = shoudong)
-    btn2.grid(row = 7, column = 0)
+    btn2 = Button(text=u'手动识别', command = shoudong)
+    btn2.grid(row = 5, column = 1)
     root.mainloop()
+
 if __name__ == '__main__':
     main()
